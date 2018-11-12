@@ -4,6 +4,8 @@ In the `src` folder are several scripts to help conduct phylogenomic analyses.
 
 ### conducting combinability analyses
 
+There are two scripts for conducting these analyses currently: `test_clusters.py` and `test_clusters_multi_measure.py`. The `test_clusters.py` will conduct analyses by using the RFW, constructing a graph, and proceeding through the graph. `test_clusters_multi_measure.py` has additional considerations like penalizing based on poor overlap of taxa (using rfp from `bp`). 
+
 - Conduct iqtree analyses on each gene. You can do this with `run_iqtree.py`.
 - Create a file with the seq filenames in order (`ls *.fa > treemap`) and place them all in a file in the same order (`cat *.treefile > mltrees`)
 - Probably delete extra files (`rm *.bionj *.mldist *.log *.ckp.gz`) and move iqtree files and treefiles to the gene directory.
