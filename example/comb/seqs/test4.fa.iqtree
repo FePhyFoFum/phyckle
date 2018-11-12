@@ -1,0 +1,113 @@
+IQ-TREE 1.6.6 built Jul  1 2018
+
+Input file name: seqs/test4.fa
+Type of analysis: tree reconstruction
+Random seed number: 633127
+
+REFERENCES
+----------
+
+To cite IQ-TREE please use:
+
+Lam-Tung Nguyen, Heiko A. Schmidt, Arndt von Haeseler, and Bui Quang Minh
+(2015) IQ-TREE: A fast and effective stochastic algorithm for estimating
+maximum likelihood phylogenies. Mol Biol Evol, 32:268-274.
+https://doi.org/10.1093/molbev/msu300
+
+SEQUENCE ALIGNMENT
+------------------
+
+Input data: 10 sequences with 500 nucleotide sites
+Number of constant sites: 2 (= 0.4% of all sites)
+Number of invariant (constant or ambiguous constant) sites: 2 (= 0.4% of all sites)
+Number of parsimony informative sites: 458
+Number of distinct site patterns: 498
+
+SUBSTITUTION PROCESS
+--------------------
+
+Model of substitution: GTR+F+G4
+
+Rate parameter R:
+
+  A-C: 0.8247
+  A-G: 0.9415
+  A-T: 0.8389
+  C-G: 0.7314
+  C-T: 0.7807
+  G-T: 1.0000
+
+State frequencies: (empirical counts from alignment)
+
+  pi(A) = 0.2442
+  pi(C) = 0.2574
+  pi(G) = 0.2474
+  pi(T) = 0.251
+
+Rate matrix Q:
+
+  A    -1.027    0.3324    0.3648    0.3298
+  C    0.3154   -0.9057    0.2834    0.3069
+  G    0.3601    0.2949    -1.048    0.3931
+  T    0.3208    0.3147    0.3875    -1.023
+
+Model of rate heterogeneity: Gamma with 4 categories
+Gamma shape alpha: 12.64
+
+ Category  Relative_rate  Proportion
+  1         0.6685         0.25
+  2         0.8876         0.25
+  3         1.067          0.25
+  4         1.376          0.25
+Relative rates are computed as MEAN of the portion of the Gamma distribution falling in the category.
+
+MAXIMUM LIKELIHOOD TREE
+-----------------------
+
+Log-likelihood of the tree: -5507.4360 (s.e. 50.0727)
+Unconstrained log-likelihood (without tree): -3104.5315
+Number of free parameters (#branches + #model parameters): 26
+Akaike information criterion (AIC) score: 11066.8721
+Corrected Akaike information criterion (AICc) score: 11069.8404
+Bayesian information criterion (BIC) score: 11176.4519
+
+Total tree length (sum of branch lengths): 6.4370
+Sum of internal branch lengths: 3.2382 (50.3064% of tree length)
+
+WARNING: 1 near-zero internal branches (<0.0020) should be treated with caution
+         Such branches are denoted by '**' in the figure below
+
+NOTE: Tree is UNROOTED although outgroup taxon 'taxon_10' is drawn at root
+Numbers in parentheses are SH-aLRT support (%)
+
++--taxon_10
+|
+|  +--taxon_9
++**| (0)
+|  |               +----taxon_7
+|  |            +--| (73.4)
+|  |            |  +------taxon_6
+|  |         +--| (29.6)
+|  |         |  |            +--------taxon_4
+|  |         |  +------------| (94.7)
+|  |         |               |             +---------------taxon_3
+|  |         |               +-------------| (94.7)
+|  |         |                             |              +**taxon_2
+|  |         |                             +--------------| (92.8)
+|  |         |                                            +----taxon_1
+|  +---------| (100)
+|            +-------taxon_5
+|
++--taxon_8
+
+Tree in newick format:
+
+(taxon_10:0.0762233570,(taxon_9:0.1069812377,(((taxon_7:0.2938319603,taxon_6:0.4030885375)73.4:0.1617994944,(taxon_4:0.5328315787,(taxon_3:0.9241523021,(taxon_2:0.0000023338,taxon_1:0.2813244442)92.8:0.8541196914)94.7:0.8359085186)94.7:0.7380079278)29.6:0.0545246137,taxon_5:0.5004717492)100:0.5938378570)0:0.0000026144,taxon_8:0.0798454580);
+
+TIME STAMP
+----------
+
+Date and time: Mon Nov 12 12:38:21 2018
+Total CPU time used: 2.19328 seconds (0h:0m:2s)
+Total wall-clock time used: 0.745286 seconds (0h:0m:0s)
+
