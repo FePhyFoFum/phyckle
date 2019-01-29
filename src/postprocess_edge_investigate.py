@@ -83,6 +83,9 @@ if __name__ == "__main__":
                         continue
                     if secondbest == -9999999999:
                         secondbest = scores[k][nm2]
+                    else:
+                        if scores[k][nm2] > secondbest and scores[k][nm2] < best:
+                            secondbest = scores[k][nm2]
                 except:
                     stri += ",-"
 
