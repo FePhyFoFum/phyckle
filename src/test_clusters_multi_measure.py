@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 import tree_reader
@@ -15,86 +17,16 @@ TEMPNAME = "TEMP"
 TEMPCOUNT = 0
 scale_trees_to_1 = True
 
-seqfileendings = ["fa","fasta","fas","aln"]
-
-class AlnSet:
-    def __init__(self):
-        self.alns = set()
-        self.filename = ""
-        self.lastweight = 0
-        self.lastfailweight = None
-        self.aicc = 0
-        self.aic = 0
-        self.bic = 0
-        self.like = 0
-        self.tree = ""
-    
-    def __str__(self):
-        return str(",".join(list(self.alns)))+" mw:"+str(self.lastweight)+" l:"+str(self.like)+" a:"+str(self.aicc)+" b:"+str(self.bic)+" f:"+str(self.filename)
-
-    def str_for_file(self):
-        st = "===\n"
-        st += "genes: "+",".join(list(self.alns))+"\n"
-        st += "likelihood: "+str(self.like)+"\n"
-        st += "aicc: "+str(self.aicc)+"\n"
-        st += "bic: "+str(self.bic)+"\n"
-        st += "filename: "+str(self.filename)+"\n"
-        st += "tree: "+str(self.tree)+"\n"
-        return st
-
 # k = num params
 # n = num of sites
 def calc_aicc(aic,n,k):
     x = aic + (((2*math.pow(k,2))+(2*k))/(n-k-1))
     return x
 
-def get_lk_from_iqtree(fn):
-    of = open(fn+".iqtree","r")
-    ll, aic, aicc = 0,0,0
-    for j in of:
-        if "Log-likelihood of the tree" in j:
-            sc = float(j.strip().split(": ")[1].split(" ")[0])
-            ll = sc
-        elif "Akaike information criterion (AIC) score" in j:
-            sc = float(j.strip().split(": ")[1].split(" ")[0])
-            aic = sc
-        elif "Corrected Akaike information criterion (AICc) score" in j:
-            sc = float(j.strip().split(": ")[1].split(" ")[0])
-            aicc = sc
-        elif "Bayesian information criterion (BIC) score" in j:
-            sc = float(j.strip().split(": ")[1].split(" ")[0])
-            bic = sc
-    of.close()
-    return ll, aic, aicc, bic
+from test_clusters import get_lk_from_iqtree,concat_nms,run_iqtree,run_iqtree_part
+from test_clusters import make_trees,scale_treelength,calc_rfw,read_treemap
+from test_clusters import AlnSet
 
-def concat_nms(alnset1,alnset2,di):
-    global TEMPCOUNT
-    n = " ".join([di+i for i in list(alnset1.alns)])
-    n += " "+" ".join([di+i for i in list(alnset2.alns)])
-    tfn = TEMPNAME+str(TEMPCOUNT)
-    cmd = "pxcat -s "+n+" -o "+di+tfn+" -p "+di+tfn+".parts"
-    os.system(cmd)
-    TEMPCOUNT += 1
-    print "  "+cmd
-    return tfn
-
-def run_iqtree(fn,di):
-    cmd = "iqtree -nt 8 -s "+di+fn+" -m GTR+G -pre "+di+fn+" -redo -bb 1000 >> iqtreelog"
-    print "  "+cmd
-    os.system(cmd)
-    os.remove(di+fn+".ckp.gz")
-    os.remove(di+fn+".log")
-    os.remove(di+fn+".mldist")
-    os.remove(di+fn+".bionj")
-
-def run_iqtree_part(fn,di,edges):
-    cmd = "iqtree -nt 8 -s "+di+fn+" -m GTR+G -pre "+di+fn+" -"+edges+" "+di+fn+".parts -bb 1000 -redo >> iqtreelog"
-    print "  "+cmd
-    os.system(cmd)
-    os.remove(di+fn+".ckp.gz")
-    os.remove(di+fn+".log")
-    os.remove(di+fn+".mldist")
-    os.remove(di+fn+".bionj")
 
 def read_rf_read_to_graph(filenamerfwpv,filenamerfp,trmap,di):
     rf = open(filenamerfwpv,"r")
@@ -168,10 +100,10 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
     going = True
     tempfiles = []
     for i in weights:
-        print "weight:",i
+        print ("weight:",i,file=sys.stderr)
         if stop: # stop early
             if i >= stopweight:
-                print "STOPPING BECAUSE STOP WAS ENTERED FOR",stopweight
+                print ("STOPPING BECAUSE STOP WAS ENTERED FOR",stopweight,file=sys.stderr)
                 break
         for j in sortededges[i]:
             if G[j[0]][j[1]]['rfp'] > 0:
@@ -183,9 +115,9 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
                 continue
             if sets[j[0]] in checked[sets[j[1]]]:
                 continue
-            print "  ",j
+            print ("  ",j,file=sys.stderr)
             if len(sets[j[0]].alns.intersection(sets[j[1]].alns)) > 0:
-                print "SOMETHING WRONG WITH OVERLAP"
+                print ("SOMETHING WRONG WITH OVERLAP",file=sys.stderr)
                 sys.exit(0)
             lks = sets[j[0]].like + sets[j[1]].like
             if usebic:
@@ -197,7 +129,7 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
             tfn = concat_nms(sets[j[0]],sets[j[1]],di)
             tempfiles.append(tfn)
             fail = False
-            run_iqtree_part(tfn,di,edges)
+            run_iqtree_part(tfn,di,edges,nthreads)
             ll,aic,aicc,bic = get_lk_from_iqtree(di+tfn)
             if usebic:
                 comp = bic
@@ -206,7 +138,7 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
             else:
                 comp = aicc
             if comp - ais < 0:
-                print "oh yeah!"
+                print ("oh yeah!",file=sys.stderr)
                 alset = set()
                 sets[j[0]].alns = sets[j[0]].alns.union(sets[j[1]].alns)
                 for k in sets[j[0]].alns:
@@ -236,56 +168,6 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
             #x = sorted(G[sortededges[i][0][0]].items(), key=lambda edge: edge[1]['weight'])
     return tempfiles
 
-def make_trees(di):
-    fls = []
-    count = 0
-    trmap = {}
-    trmapfile = open("treemap","w")
-    for i in os.listdir(di):
-        if i.split(".")[-1] in seqfileendings:
-            run_iqtree(i,di)
-            fls.append(di+i+".treefile")
-            trmap[str(count)] = i
-            trmapfile.write(i+"\n")
-            count += 1
-    trmapfile.close()
-    mltreefile = di+"mltrees"
-    cmd = "cat "+" ".join(fls)+" >"+ mltreefile
-    os.system(cmd)
-    return mltreefile,trmap
-
-def scale_treelength(tree,length):
-    s = 0
-    for j in tree.iternodes():
-        s += j.length
-    v = (1./s)
-    for j in tree.iternodes():
-        j.length = j.length * v
-    return tree
-
-def calc_rfw(treefile):
-    rffile = "rfw"
-    if scale_trees_to_1:
-        ntreefile = treefile+"_sc"
-        ntf = open(ntreefile,"w")
-        for i in tree_reader.read_tree_file_iter(treefile):
-            ntf.write(scale_treelength(i,1.0).get_newick_repr(True)+";\n")
-        ntf.close()
-        treefile = ntreefile
-    cmd = "bp -t "+treefile+" -rfwp -v > "+rffile+" 2> bplog"
-    os.system(cmd)
-    return rffile
-
-def read_treemap(filename):
-    trmap = {}
-    tm = open(filename,"r")
-    count = 0 
-    for i in tm:
-        trmap[str(count)] = i.strip()
-        count += 1
-    tm.close()
-    return trmap
-
 def generate_argparser():
     parser = ap.ArgumentParser(prog="test_clusters_multi_measure.py",
         formatter_class=ap.ArgumentDefaultsHelpFormatter)
@@ -305,6 +187,10 @@ def generate_argparser():
         help=("Use AIC instead of AICc."))
     parser.add_argument("-s","--stop",type=float,required=False,
         help=("Stop weight."))
+    parser.add_argument("-t","--threads",type=str,required=False,default="2",
+        help=("Number of threads."))
+    parser.add_argument("-p", "--filenamepattern",help="is there a particular common part of the name (e.g., 'fa')?",
+                        default="",required =False )
     return parser
 
 def main():
@@ -316,7 +202,7 @@ def main():
     if di[-1] != "/":
         di += "/"
     rffile = None
-    print  >> sys.stderr, "reading treemap and rfw"
+    print ("reading treemap and rfw",file=sys.stderr)
     trmap = read_treemap(args.treemap)
     rffile = args.rfwpv
     rfpfile = args.rfp
@@ -327,35 +213,35 @@ def main():
         stopweight = args.stop
         stop = True
 
-    print >> sys.stderr,"creating graph"
-    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,rfpfile,trmap,di)
+    print ("creating graph",file=sys.stderr)
+    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,rfpfile,trmap,di,args.threads)
     
     usebic = False
     useaic = False
     if args.bic == True:
-        print >> sys.stderr,"using BIC"
+        print ("using BIC",file=sys.stderr)
         usebic = True
     elif args.aic == True:
-        print >> sys.stderr,"using AIC"
+        print ("using AIC",file=sys.stderr)
         useaic = True
     edges = args.edge
     
-    print >> sys.stderr,"clustering"
-    tempfiles = run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight,G)
+    print ("clustering",file=sys.stderr)
+    tempfiles = run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight,G,args.threads)
 
-    print >> sys.stderr, "writing final sets to finalsets.txt"
+    print ("writing final sets to finalsets.txt",file=sys.stderr)
     outfile = open("finalsets.txt","w")
-    print ""
-    print "FINAL SETS"
-    print "=========="
+    print ("")
+    print ("FINAL SETS")
+    print ("==========")
     keepers = set()
     for i in list(set(sets.values())):
-        print i
+        print (i)
         outfile.write(i.str_for_file()+"\n")
         keepers.add(i.filename)
     outfile.close()
 
-    print "deleting other files"
+    print ("deleting other files")
     for i in tempfiles:
         if i not in keepers:
             if os.path.isfile(di+i):

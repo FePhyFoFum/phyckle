@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import os
 import tree_reader
@@ -9,8 +11,6 @@ import argparse as ap
 TEMPNAME = "TEMP"
 TEMPCOUNT = 0
 scale_trees_to_1 = True
-
-seqfileendings = ["fa","fasta","fas","aln"]
 
 class AlnSet:
     def __init__(self):
@@ -64,28 +64,28 @@ def concat_nms(alnset1,alnset2,di):
     cmd = "pxcat -s "+n+" -o "+di+tfn+" -p "+di+tfn+".parts"
     os.system(cmd)
     TEMPCOUNT += 1
-    print "  "+cmd
+    print ("  "+cmd,file=sys.stderr)
     return tfn
 
-def run_iqtree(fn,di):
-    cmd = "iqtree -nt 8 -s "+di+fn+" -m GTR+G -pre "+di+fn+" -redo -bb 1000 >> iqtreelog"
-    print "  "+cmd
+def run_iqtree(fn,di,nthreads):
+    cmd = "iqtree -nt "+nthreads+" -s "+di+fn+" -m GTR+G -pre "+di+fn+" -redo -bb 1000 >> iqtreelog"
+    print ("  "+cmd,file=sys.stderr)
     os.system(cmd)
     os.remove(di+fn+".ckp.gz")
     os.remove(di+fn+".log")
     os.remove(di+fn+".mldist")
     os.remove(di+fn+".bionj")
 
-def run_iqtree_part(fn,di,edges):
-    cmd = "iqtree -nt 8 -s "+di+fn+" -m GTR+G -pre "+di+fn+" -"+edges+" "+di+fn+".parts -bb 1000 -redo >> iqtreelog"
-    print "  "+cmd
+def run_iqtree_part(fn,di,edges,nthreads):
+    cmd = "iqtree -nt "+nthreads+" -s "+di+fn+" -m GTR+G -pre "+di+fn+" -"+edges+" "+di+fn+".parts -bb 1000 -redo >> iqtreelog"
+    print ("  "+cmd,file=sys.stderr)
     os.system(cmd)
     os.remove(di+fn+".ckp.gz")
     os.remove(di+fn+".log")
     os.remove(di+fn+".mldist")
     os.remove(di+fn+".bionj")
 
-def read_rf_read_to_graph(filename,trmap,di):
+def read_rf_read_to_graph(filename,trmap,di,threads):
     rf = open(filename,"r")
     import networkx as nx
     import numpy as np
@@ -142,14 +142,14 @@ def read_rf_read_to_graph(filename,trmap,di):
     weights.sort()
     return G,weights,sortededges,sets,checked
 
-def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight):
+def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight,nthreads):
     going = True
     tempfiles = []
     for i in weights:
-        print "weight:",i
+        print ("weight:",i,file=sys.stderr)
         if stop: # stop early
             if i >= stopweight:
-                print "STOPPING BECAUSE STOP WAS ENTERED FOR",stopweight
+                print ("STOPPING BECAUSE STOP WAS ENTERED FOR",stopweight,file=sys.stderr)
                 break
         for j in sortededges[i]:
             #print >> sys.stderr, sets[j[0]],sets[j[1]]
@@ -159,9 +159,9 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
                 continue
             if sets[j[0]] in checked[sets[j[1]]]:
                 continue
-            print "  ",j
+            print ("  ",j,file=sys.stderr)
             if len(sets[j[0]].alns.intersection(sets[j[1]].alns)) > 0:
-                print "SOMETHING WRONG WITH OVERLAP"
+                print ("SOMETHING WRONG WITH OVERLAP",file=sys.stderr)
                 sys.exit(0)
             lks = sets[j[0]].like + sets[j[1]].like
             if usebic:
@@ -173,7 +173,7 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
             tfn = concat_nms(sets[j[0]],sets[j[1]],di)
             tempfiles.append(tfn)
             fail = False
-            run_iqtree_part(tfn,di,edges)
+            run_iqtree_part(tfn,di,edges,nthreads)
             ll,aic,aicc,bic = get_lk_from_iqtree(di+tfn)
             if usebic:
                 comp = bic
@@ -182,7 +182,7 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
             else:
                 comp = aicc
             if comp - ais < 0:
-                print "oh yeah!"
+                print ("oh yeah!",file=sys.stderr)
                 alset = set()
                 sets[j[0]].alns = sets[j[0]].alns.union(sets[j[1]].alns)
                 for k in sets[j[0]].alns:
@@ -212,14 +212,15 @@ def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,
             #x = sorted(G[sortededges[i][0][0]].items(), key=lambda edge: edge[1]['weight'])
     return tempfiles
 
-def make_trees(di):
+def make_trees(di,filenamepat,nthreads):
     fls = []
     count = 0
     trmap = {}
     trmapfile = open("treemap","w")
     for i in os.listdir(di):
-        if i.split(".")[-1] in seqfileendings:
-            run_iqtree(i,di)
+        if filenamepat in i:
+        #if i.split(".")[-1] in seqfileendings:
+            run_iqtree(i,di,nthreads)
             fls.append(di+i+".treefile")
             trmap[str(count)] = i
             trmapfile.write(i+"\n")
@@ -263,7 +264,7 @@ def read_treemap(filename):
     return trmap
 
 def generate_argparser():
-    parser = ap.ArgumentParser(prog="add_outgroup_to_matrix.py",
+    parser = ap.ArgumentParser(prog="test_clusters.py",
         formatter_class=ap.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-d","--dir",type=str,required=False,default="./",
         help=("Directory with the genes (and trees)."))
@@ -279,6 +280,10 @@ def generate_argparser():
         help=("Use AIC instead of AICc."))
     parser.add_argument("-s","--stop",type=float,required=False,
         help=("Stop weight."))
+    parser.add_argument("-t","--threads",type=str,required=False,default="2",
+        help=("Number of threads."))
+    parser.add_argument("-p", "--filenamepattern",help="is there a particular common part of the name (e.g., 'fa')?",
+                        default="",required =False )
     return parser
 
 def main():
@@ -291,13 +296,13 @@ def main():
         di += "/"
     rffile = None
     if args.treemap and args.rfw:
-        print  >> sys.stderr, "reading treemap and rfw"
+        print  ("reading treemap and rfw",file=sys.stderr)
         trmap = read_treemap(args.treemap)
         rffile = args.rfw
     else: # calculate the trees
-        print >> sys.stderr, "making ml trees for genes"
+        print ("making ml trees for genes",file=sys.stderr)
         mltreesfile,trmap = make_trees(di)
-        print >> sys.stderr, "calculating rfw"
+        print ("calculating rfw",file=sys.stderr)
         rffile = calc_rfw(mltreesfile)
     
     stop = False
@@ -306,35 +311,35 @@ def main():
         stopweight = args.stop
         stop = True
 
-    print >> sys.stderr,"creating graph"
-    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,trmap,di)
+    print ("creating graph",file=sys.stderr)
+    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,trmap,di,args.threads)
     
     usebic = False
     useaic = False
     if args.bic == True:
-        print >> sys.stderr,"using BIC"
+        print ("using BIC",file=sys.stderr)
         usebic = True
     elif args.aic == True:
-        print >> sys.stderr,"using AIC"
+        print ("using AIC",file=sys.stderr)
         useaic = True
     edges = args.edge
     
-    print >> sys.stderr,"clustering"
-    tempfiles = run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight)
+    print ("clustering",file=sys.stderr)
+    tempfiles = run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight,args.threads)
 
-    print >> sys.stderr, "writing final sets to finalsets.txt"
+    print ("writing final sets to finalsets.txt",file=sys.stderr)
     outfile = open("finalsets.txt","w")
-    print ""
-    print "FINAL SETS"
-    print "=========="
+    print ("")
+    print ("FINAL SETS")
+    print ("==========")
     keepers = set()
     for i in list(set(sets.values())):
-        print i
+        print (i)
         outfile.write(i.str_for_file()+"\n")
         keepers.add(i.filename)
     outfile.close()
 
-    print "deleting other files"
+    print ("deleting other files")
     for i in tempfiles:
         if i not in keepers:
             if os.path.isfile(di+i):

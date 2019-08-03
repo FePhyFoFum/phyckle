@@ -1,14 +1,26 @@
+#!/usr/bin/env python3
+
 import sys
+import argparse
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print "print "+sys.argv[0]+" files.csv"
-        sys.exit(0)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-f", "--csvfiles", nargs='+',help="List each file in the order to process.",required=True)
+    parser.add_argument("-o","--outfile",help="Outfile for analysis",required=True)
+
+    if len(sys.argv[1:]) == 0:
+        sys.argv.append("-h")
+
+    args = parser.parse_args()
+    print(args.csvfiles)
+
     nms = {}
-    files = sys.argv[1:]
+    files = args.csvfiles
     fileheaders = []
     count = 0
+    outf=open(args.outfile,"w")
     for i in files:
         found = set()
         fl = open(i,"r")
@@ -37,6 +49,7 @@ if __name__ == "__main__":
     stri = "gene"
     for i in fileheaders:
         stri += ","+",".join(i)
-    print stri
+    print (stri,file=outf)
     for i in nms:
-        print i+","+",".join(nms[i])
+        print (i+","+",".join(nms[i]),file=outf)
+    outf.close()

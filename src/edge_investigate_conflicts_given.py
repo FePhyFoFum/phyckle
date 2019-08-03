@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import argparse
 import tree_reader
 import sys
 import os
@@ -6,11 +9,9 @@ import seq
 # do we want to have a minimum branch length below which you ignore?
 MINBL = 0.0000
 
-# RAXMLLINE = "raxml -T 2 -s SEQ -n NAME -p 1234 -m GTRCAT -g CONFILE"
-RAXMLLINE = "raxml -T 8 -s SEQ -n NAME -p 1234 -m GTRCAT -g CONFILE"
-IQTREELINE = "iqtree -s SEQ -m GTR+G -g CONFILE -nt 2 -pre NAME"
-makeqsub = False
-raxml = True
+RAXMLLINE = "RAXML -T THREAD -f a -# 100 -x 1234 -s SEQ -n NAME -p 1234 -m GTRCAT -g CONFILE"
+RAXMLLINE = "RAXML -T THREAD -s SEQ -n NAME -p 1234 -m GTRCAT -g CONFILE"
+run = False
 
 class Bipart:
     def __init__ (self,lf,rt):
@@ -95,16 +96,32 @@ conflicting bipartitions should have a - in the front
 
 """
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print "python "+sys.argv[0]+ " in.bptree outfile dir_for_genes_fa outdir"
-        sys.exit(0)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-c","--constraint",help="What is the file with the constraints",required=True)
+    parser.add_argument("-o","--outfile",help="What is the outfile",required=True)
+    parser.add_argument("-m","--outdir",help="What is the outdir for all the files",required=True)
+    parser.add_argument("-r", "--raxml", help="Where is the raxml bin?",default="raxml",required=False)
+    parser.add_argument("-t", "--threads",help="How many threads for raxml?",default="4",required=False)
+    parser.add_argument("-d", "--indir",help="Which directory?",required=True)
+    parser.add_argument("-s", "--filenamepattern",help="is there a particular common part of the name?",
+                        default="",required =False )
+
+    if len(sys.argv[1:]) == 0:
+        sys.argv.append("-h")
+
+    args = parser.parse_args()
+
+    isn = args.filenamepattern
+
+    RAXMLLINE = RAXMLLINE.replace("THREAD",args.threads).replace("RAXML",args.raxml)
 
     test_bps = {}
     test_bp_con_sets = {} #key is int of testbipart and value is list of unique conflicts
-    outf = open(sys.argv[2],"w")
+    outf = open(args.outfile,"w")
     count = 0
     curcount = 0
-    of = open(sys.argv[1],"r")
+    of = open(args.constraint,"r")
     for i in of:
         tree = None
         if i[0] == "-":
@@ -123,56 +140,40 @@ if __name__ == "__main__":
     for i in test_bp_con_sets:
         outf.write("constraint: "+str(i)+"\n")
         outf.write(str(test_bps[i])+"\n")
-        print "constraint:",i
-        print " -conflicts-"
+        print ("constraint:",i,file=sys.stderr)
+        print (" -conflicts-",file=sys.stderr)
         outf.write(" -conflicts-\n")
         for j in range(len(test_bp_con_sets[i])):
-            print " ",j
+            print (" ",j,file=sys.stderr)
             outf.write(" "+str(j)+" : "+str(test_bp_con_sets[i][j])+"\n")
     outf.close()
     #sys.exit(0)
     # run all the raxml things
-    print "running constraints"
-    gdir = sys.argv[3]
+    print ("running constraints",file=sys.stderr)
+    gdir = args.indir
     if gdir[-1] != "/":
         gdir += "/"
-    odir = sys.argv[4]
+    odir = args.outdir
     if os.path.isdir(odir) == False:
-        print "making",odir
+        print ("making",odir,file=sys.stderr)
         os.mkdir(odir)
     if odir[-1] != "/":
         odir += "/"
     count = 0
     for i in os.listdir(gdir):
-        if i[0] == ".":
-            continue
-        if i[-4:] == ".log":
-            continue
-        if ".reduced" in  i:
-            continue
-        if ".parstree" in i:
-            continue
-        if ".uniqueseq" in i:
-            continue
-        if ".iqtree" in i:
-            continue
-        if ".treefile" in i:
-            continue
-        #if "c1c2" not in i:
-        #    continue
         seqf = i
-        print "SEQUENCE:",seqf
+        print ("SEQUENCE:",seqf,file=sys.stderr)
         seq_names = set()
         for j in seq.read_fasta_file_iter(gdir+i):
             seq_names.add(j.name)
         for j in test_bp_con_sets:
-            print " constraint:",j
+            print (" constraint:",j,file=sys.stderr)
             ex = seq_names.symmetric_difference(test_bps[j].union)
             constring = ""
             if len(ex) > 0:
                 constring = test_bps[j].newick(ex)
                 if constring == "DONTRUN":
-                    print "DONTRUN"
+                    print ("DONTRUN",file=sys.stderr)
                     continue
             else:
                 constring = test_bps[j].newick()
@@ -180,74 +181,42 @@ if __name__ == "__main__":
             cf = open(confilename,"w")
             cf.write(constring+";")
             cf.close()
-            print " ",constring
+            print (" ",constring,file=sys.stderr)
             name = i+"___cons_"+str(j)
-            if raxml:
-                cmd = RAXMLLINE.replace("SEQ",gdir+i).replace("NAME",name).replace("CONFILE",confilename)
-                print " ",cmd
-                if makeqsub:
-                    create_qsub(count,name+".qsub",name,cmd)
-                else:
-                    os.system(cmd)
-                    os.system("mv RAxML_bestTree."+name+" "+odir)
-                    os.system("mv RAxML_info."+name+" "+odir)
-                    os.system("rm RAxML_log."+name)
-                    os.system("rm RAxML_result."+name)
-            else:
-                cmd = IQTREELINE.replace("SEQ",gdir+i).replace("CONFILE",confilename).replace("NAME",name)
-                print " ",cmd
-                if makeqsub:
-                    create_qsub(count,name+".qsub",name,cmd)
-                else:
-                    os.system(cmd)
-                    addname = "___cons_"+str(j)
-                    os.system("mv "+gdir+name+".treefile "+odir)
-                    os.system("mv "+gdir+name+".log "+odir)
-                    os.system("mv "+gdir+name+".iqtree "+odir)
-                    os.system("rm "+gdir+name+".parstree ")
-                    os.system("rm "+gdir+name+".ckp.gz")
-                count += 1
-            print "  -conflicts-"
+            cmd = RAXMLLINE.replace("SEQ",gdir+i).replace("NAME",name).replace("CONFILE",confilename)
+            print (cmd,file=sys.stdout)
+            if run == True:
+                os.system(cmd)
+                os.system("mv RAxML_bipartitions."+name+" "+odir)
+                os.system("mv RAxML_info."+name+" "+odir)
+                os.system("rm RAxML_bipartitionsBranchLabels."+name)
+                os.system("rm RAxML_bootstrap."+name)
+                os.system("rm RAxML_bestTree."+name)
+            print ("  -conflicts-",file=sys.stderr)
             for k in range(len(test_bp_con_sets[j])):
                 ex = seq_names.symmetric_difference(test_bp_con_sets[j][k].union)
-                print ex,seq_names,test_bp_con_sets[j][k].union
+                print (ex,seq_names,test_bp_con_sets[j][k].union,file=sys.stderr)
                 constring = ""
                 if len(ex) > 0:
                     constring = test_bp_con_sets[j][k].newick(ex)
                     if constring == "DONTRUN":
-                        print "DONTRUN"
+                        print ("DONTRUN",file=sys.stderr)
                         continue
                 else:
                     constring = test_bp_con_sets[j][k].newick()
-                print "  ",k
+                print ("  ",k,file=sys.stderr)
                 confilename = odir+i+"___cons_"+str(j)+"_conf_"+str(k)
                 cf = open(confilename,"w")
                 cf.write(constring+";")
                 cf.close()
-                print "  ",constring
+                print ("  ",constring,file=sys.stderr)
                 name = i+"___cons_"+str(j)+"_conf_"+str(k)
-                if raxml:
-                    cmd = RAXMLLINE.replace("SEQ",gdir+i).replace("NAME",name).replace("CONFILE",confilename)
-                    print "  ",cmd
-                    if makeqsub:
-                        create_qsub(count,name+".qsub",name,cmd)
-                    else:
-                        os.system(cmd)
-                        os.system("mv RAxML_bestTree."+name+" "+odir)
-                        os.system("mv RAxML_info."+name+" "+odir)
-                        os.system("rm RAxML_log."+name)
-                        os.system("rm RAxML_result."+name)
-                else:
-                    cmd = IQTREELINE.replace("SEQ",gdir+i).replace("CONFILE",confilename).replace("NAME",name)
-                    print " ",cmd
-                    if makeqsub:
-                        create_qsub(count,name+".qsub",name,cmd)
-                    else:
-                        os.system(cmd)
-                        #addname = "___cons_"+str(j)+"_conf_"+str(k)
-                        os.system("mv "+gdir+name+".treefile "+odir)
-                        os.system("mv "+gdir+name+".log "+odir)
-                        os.system("mv "+gdir+name+".iqtree "+odir)
-                        os.system("rm "+gdir+name+".parstree ")
-                        os.system("rm "+gdir+name+".ckp.gz")
-                    count += 1
+                cmd = RAXMLLINE.replace("SEQ",gdir+i).replace("NAME",name).replace("CONFILE",confilename)
+                print (cmd,file=sys.stdout)
+                if run == True:
+                    os.system(cmd)
+                    os.system("mv RAxML_bipartitions."+name+" "+odir)
+                    os.system("mv RAxML_info."+name+" "+odir)
+                    os.system("rm RAxML_bipartitionsBranchLabels."+name)
+                    os.system("rm RAxML_bootstrap."+name)
+                    os.system("rm RAxML_bestTree."+name)

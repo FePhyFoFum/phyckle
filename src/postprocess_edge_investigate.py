@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import argparse
 import sys
 import os
 
@@ -6,10 +9,17 @@ out.conflict
 """
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print "python "+sys.argv[0]+" out.conflict outd"
-        sys.exit(0)
-    oc = open(sys.argv[1],"r")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-c", "--outconflict", help="Where is the outfile from edge_investigate_conflicts_given.py?",required=True)
+    parser.add_argument("-d", "--dir",help="Which directory has the output files from RAxML?",required=True)
+
+    if len(sys.argv[1:]) == 0:
+        sys.argv.append("-h")
+
+    args = parser.parse_args()
+
+    oc = open(args.outconflict,"r")
     constraints = {} #key is constraint number and value is conflict alts
     curcons = None
     curlist = None
@@ -35,7 +45,7 @@ if __name__ == "__main__":
     #get last one
     constraints[curcons] = curlist
     oc.close()
-    outd = sys.argv[2]
+    outd = args.dir
     if outd[-1] != "/":
         outd += "/"
     
@@ -52,7 +62,7 @@ if __name__ == "__main__":
             # print sfn,anafn
             of = open(outd+i,"r")
             for j in of:
-                if "Final GAMMA-based" in j:
+                if "Final GAMMA-based" in j or "Final ML Optimization Likelihood" in j:
                     sc = float(j.strip().split()[-1])
                     scores[sfn][anafn] = sc
             of.close()
@@ -66,7 +76,7 @@ if __name__ == "__main__":
             nm2 = ","+nm+"_conf_"+str(j)
             outf.write(nm2)
         outf.write(",bestone,best,secondbest,diffbestsecondbest\n")
-        print nm
+        print (nm,file=sys.stderr)
         for k in scores:
             stri = k +","+str(scores[k][nm])
             best = scores[k][nm]
@@ -80,12 +90,14 @@ if __name__ == "__main__":
                         secondbest = best
                         best = scores[k][nm2]
                         bestone = nm2
-                        continue
-                    if secondbest == -9999999999:
-                        secondbest = scores[k][nm2]
                     else:
-                        if scores[k][nm2] > secondbest and scores[k][nm2] < best:
+                        if scores[k][nm2] > secondbest:
                             secondbest = scores[k][nm2]
+                    #if secondbest == -9999999999:
+                    #    secondbest = scores[k][nm2]
+                    #else:
+                    #    if scores[k][nm2] > secondbest and scores[k][nm2] < best:
+                    #        secondbest = scores[k][nm2]
                 except:
                     stri += ",-"
 

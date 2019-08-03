@@ -63,7 +63,6 @@ if __name__ == "__main__":
         if "required" == i:
             requiredi = count
         count += 1
-    #print translation
     for i in fl:
         spls = i.strip().split(",")
         if "-" in spls:
