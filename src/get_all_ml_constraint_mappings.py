@@ -38,7 +38,7 @@ if __name__ == "__main__":
         of = open("constraints"+str(count),"w")
         of.write(i+';')
         of.close()
-        cmd = cosl+" -g constraints"+str(count)+" -d "+mldir+" -o constraints"+str(count)+".csv"
+        cmd = cosl+" -g constraints"+str(count)+" -d "+mldir+" -o constraints"+str(count)+".csv -n constraint"+str(count)
         print (cmd,file=sys.stderr)
         os.system(cmd)
         count += 1

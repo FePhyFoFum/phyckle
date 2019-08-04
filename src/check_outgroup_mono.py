@@ -24,7 +24,8 @@ if __name__ == "__main__":
                         default="",required =False )
     parser.add_argument("-e","--exclude",help="exclude files with this string",default="",required=False)
     parser.add_argument("-o","--outfile",help="Outfile for analysis",required=True)
-
+    parser.add_argument("-n","--name",help="Name of the column",required=True)
+    
     if len(sys.argv[1:]) == 0:
         sys.argv.append("-h")
 
@@ -43,7 +44,7 @@ if __name__ == "__main__":
         print("checking all files in '"+gened+"'",file=sys.stderr)
 
     outf = open(args.outfile,"w")
-
+    outf.write("gene,"+args.name+"\n")
     for i in os.listdir(gened):
         if args.filenamepattern in i:
             if len(args.exclude) > 0:
@@ -59,5 +60,5 @@ if __name__ == "__main__":
             for j in out.split("\n"):
                 if len(j.strip()) > 10:
                     count += 1
-            print(gf+","+str(count),file=outf)
+            print(gf.replace("RAxML_fastTreeSH_Support.","")+","+str(count),file=outf)
     outf.close()

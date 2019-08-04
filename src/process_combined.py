@@ -64,6 +64,7 @@ if __name__ == "__main__":
             requiredi = count
         count += 1
     for i in fl:
+        print i
         spls = i.strip().split(",")
         if "-" in spls:
             continue
