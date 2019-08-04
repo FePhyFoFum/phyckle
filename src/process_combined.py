@@ -1,4 +1,7 @@
+#!/usr/bin/env python3
+
 import sys
+import argparse
 
 """
 this is intended to process the combined files from doing a combine_csv
@@ -10,10 +13,12 @@ and then a bunch of things from the basic cons_0.csv
 verbose = True
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print "python "+sys.argv[0]+" combined.csv"
-        sys.exit(0)
-    fl = open(sys.argv[1],"r")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--combined",help="Combined csv (from combine_csv.py)",required=True)
+    if len(sys.argv[1:]) == 0:
+        sys.argv.append("-h")
+    args = parser.parse_args()
+    fl = open(args.combined,"r")
     spls = fl.readline().strip().split(",") # read the first line
     genei = 0
     bestone = None
@@ -64,7 +69,6 @@ if __name__ == "__main__":
             requiredi = count
         count += 1
     for i in fl:
-        print i
         spls = i.strip().split(",")
         if "-" in spls:
             continue
@@ -96,13 +100,13 @@ if __name__ == "__main__":
                     constraint2difsbad[t].append(float(spls[diff]))
                     constraint2genesbad[t].append(spls[genei])
     fl.close()
-    print "constraint sumdiff sum2diff lengenes len2genes"
+    print ("constraint sumdiff sum2diff lengenes len2genes")
     for i in constraintdifs:
-        print i,sum(constraintdifs[i]),sum(constraint2difs[i]),len(constraintgenes[i]),len(constraint2genes[i])
+        print (i,sum(constraintdifs[i]),sum(constraint2difs[i]),len(constraintgenes[i]),len(constraint2genes[i]))
         import numpy
         x = numpy.argsort(constraintdifs[i])[::-1][0:3]
         for j in x:
-            print "  ",constraintdifs[i][j],constraintgenes[i][j]
+            print ("  ",constraintdifs[i][j],constraintgenes[i][j])
 
 
     lks = []
@@ -111,10 +115,10 @@ if __name__ == "__main__":
     gns2 = []
     totalgn = 0
     totalgn2 = 0
-    print "\noutgroup and ml"
-    print "constraint sumdiff sum2diff lengenes len2genes"
+    print ("\noutgroup and ml")
+    print ("constraint sumdiff sum2diff lengenes len2genes")
     for i in constraintdifs:
-        print i,sum(constraintdifsbad[i]),sum(constraint2difsbad[i]),len(constraintgenesbad[i]),len(constraint2genesbad[i])
+        print (i,sum(constraintdifsbad[i]),sum(constraint2difsbad[i]),len(constraintgenesbad[i]),len(constraint2genesbad[i]))
         lks.append(str(sum(constraintdifsbad[i])))
         lks2.append(str(sum(constraint2difsbad[i])))
         gns.append(str(len(constraintgenesbad[i])))
@@ -124,7 +128,7 @@ if __name__ == "__main__":
         import numpy
         x = numpy.argsort(constraintdifsbad[i])[::-1][0:3]
         for j in x:
-            print "  ",constraintdifsbad[i][j],constraintgenesbad[i][j]
+            print ("  ",constraintdifsbad[i][j],constraintgenesbad[i][j])
         #print "cp "+" ".join(constraint2genesbad[i])
     gns.append(str(852-totalgn))
     gns2.append(str(852-totalgn2))
@@ -144,3 +148,4 @@ if __name__ == "__main__":
     of.write('pie(e,col=splitComp("steelblue",plot=F),labels="")\n')
     of.write('dev.off()')
     of.close()
+    

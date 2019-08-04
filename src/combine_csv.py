@@ -6,13 +6,10 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
     parser.add_argument("-f", "--csvfiles", nargs='+',help="List each file in the order to process.",required=True)
     parser.add_argument("-o","--outfile",help="Outfile for analysis",required=True)
-
     if len(sys.argv[1:]) == 0:
         sys.argv.append("-h")
-
     args = parser.parse_args()
     print(args.csvfiles)
 
