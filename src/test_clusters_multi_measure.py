@@ -177,7 +177,7 @@ def generate_argparser():
         help=("List of ordered tree files (each line would be a gene name - for rfw)"))
     parser.add_argument("-w","--rfwpv",type=str,required=True,
         help=("The RFWPV file with numbers corresponding to the lines in treemap file. bp -t t -rfwp -v."))
-    parser.add_argument("-p","--rfp",type=str,required=True,
+    parser.add_argument("-r","--rfp",type=str,required=True,
         help=("The RFP file with numbers corresponding to the lines in treemap file. bp -t t -rfp -scut 90 -v."))
     parser.add_argument("-e","--edge",type=str,required=True,
         help=("Edge type (q,spp, or sp)"))
