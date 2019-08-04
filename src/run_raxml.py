@@ -62,6 +62,7 @@ if __name__ == "__main__":
             print (x,file=sys.stderr)
             os.system(x)
             if args.run_sh:
+                os.system("rm RAxML_info."+i)
                 x = cmdsh.replace("SEQ",std+i).replace("NAME",i).replace("THREAD",args.threads).replace("RAXML",args.raxml).replace("TREEFILE",treefile)
                 print (x,file=sys.stderr)
                 os.system(x)
