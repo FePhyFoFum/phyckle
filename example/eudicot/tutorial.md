@@ -32,8 +32,6 @@ This will take a while.
 We can test whether these violate our outgroup requirements. 
 `~/phyckle/src/check_outgroup_mono.py -g outgroup.tre -d shtrees -o mono.out -n outgroup`
 
-*todo* Add branch length and taxa filters
-
 We can also test whether the tree that is supported vs our alternatives actually agrees with (or at least doesn't conflict with) the ML tree.
 `~/phyckle/src/get_all_ml_constraint_mappings.py -c constraints -d shtrees -s ~/phyckle/src/check_outgroup_mono.py`
 

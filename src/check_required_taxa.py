@@ -5,7 +5,6 @@ import os
 import seq
 import argparse
 
-
 """
 this is intended to check to see if particular files have the required taxa
 
