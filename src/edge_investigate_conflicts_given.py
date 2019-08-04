@@ -11,7 +11,7 @@ MINBL = 0.0000
 
 RAXMLLINE = "RAXML -T THREAD -f a -# 100 -x 1234 -s SEQ -n NAME -p 1234 -m GTRCAT -g CONFILE"
 RAXMLLINE = "RAXML -T THREAD -s SEQ -n NAME -p 1234 -m GTRCAT -g CONFILE"
-run = False
+run = True # can be helpful if you want to distribute runs
 
 class Bipart:
     def __init__ (self,lf,rt):
