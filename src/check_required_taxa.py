@@ -18,7 +18,7 @@ gene,bad (bad = 1 is bad)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--required", help="File containing the required taxa.",required=True)
-    parser.add_argument("-d", "--dir", help="Directory containing the gene trees", required=True)
+    parser.add_argument("-d", "--dir", help="Directory containing the genes", required=True)
     parser.add_argument("-o","--outfile",help="Outfile for analysis",required=True)
     if len(sys.argv[1:]) == 0:
         sys.argv.append("-h")

@@ -130,8 +130,13 @@ if __name__ == "__main__":
         for j in x:
             print ("  ",constraintdifsbad[i][j],constraintgenesbad[i][j])
         #print "cp "+" ".join(constraint2genesbad[i])
-    gns.append(str(852-totalgn))
-    gns2.append(str(852-totalgn2))
+    print("XXXXXXX")
+    for i in constraintdifs:
+        print (i,sum(constraintdifsbad[i]),sum(constraint2difsbad[i]),len(constraintgenesbad[i]),len(constraint2genesbad[i]))
+    """
+    numgenes = 852
+    gns.append(str(numgenes-totalgn))
+    gns2.append(str(numgenes-totalgn2))
 
     # write the pies file
     of = open("pies.R","w")
@@ -148,4 +153,4 @@ if __name__ == "__main__":
     of.write('pie(e,col=splitComp("steelblue",plot=F),labels="")\n')
     of.write('dev.off()')
     of.close()
-    
+    """
