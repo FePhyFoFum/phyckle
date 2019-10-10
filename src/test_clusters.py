@@ -85,7 +85,7 @@ def run_iqtree_part(fn,di,edges,nthreads):
     os.remove(di+fn+".mldist")
     os.remove(di+fn+".bionj")
 
-def read_rf_read_to_graph(filename,trmap,di,threads):
+def read_rf_read_to_graph(filename,trmap,di,threads,filtermiss):
     rf = open(filename,"r")
     import networkx as nx
     import numpy as np
@@ -94,6 +94,7 @@ def read_rf_read_to_graph(filename,trmap,di,threads):
     weights = []
     sets = {} #key is aln , value is the AlnSet
     checked = {} # key is alnset, value is list of alnset
+    taxsets = {}
     for i in rf:
         spls = i.strip().split(":")
         t = spls[0].split()
@@ -112,6 +113,8 @@ def read_rf_read_to_graph(filename,trmap,di,threads):
             x.bic = bic
             x.filename = fn
             x.tree = open(di+fn+".treefile","r").readline()
+            if filtermiss != None and fn not in taxsets:
+                taxsets[fn] = set(tree_reader.read_tree_string(x.tree).lvsnms())
             sets[f1] = x
             checked[x] = set()
         if f2 not in sets:
@@ -127,8 +130,17 @@ def read_rf_read_to_graph(filename,trmap,di,threads):
             x.bic = bic
             x.filename = fn
             x.tree = open(di+fn+".treefile","r").readline()
+            if filtermiss != None and fn not in taxsets:
+                taxsets[fn] = set(tree_reader.read_tree_string(x.tree).lvsnms())
             sets[f2] = x
             checked[x] = set()
+        doit = True
+        if filtermiss != None:
+            overlap = len(taxsets[f1].intersection(taxsets[f2]))
+            if overlap/float(len(taxsets[f1])) < filtermiss or overlap/float(len(taxsets[f2])) < filtermiss:
+                doit = False
+        if doit == False:
+            continue 
         t = spls[1].strip().split()
         v = float(t[0])
         try:
@@ -280,6 +292,8 @@ def generate_argparser():
         help=("Use AIC instead of AICc."))
     parser.add_argument("-s","--stop",type=float,required=False,
         help=("Stop weight."))
+    parser.add_argument("-f","--filtermiss",type=float,required=False,default=False,
+        help=("filtermissing taxa at this proportion (.9 will require that sets overlap with at least 90 percent)"))
     parser.add_argument("-t","--threads",type=str,required=False,default="2",
         help=("Number of threads."))
     parser.add_argument("-p", "--filenamepattern",help="is there a particular common part of the name (e.g., 'fa')?",
@@ -305,6 +319,10 @@ def main():
         print ("calculating rfw",file=sys.stderr)
         rffile = calc_rfw(mltreesfile)
     
+    filtermiss = None
+    if args.filtermiss:
+        filtermiss = args.filtermiss
+
     stop = False
     stopweight = 0
     if args.stop != None:
@@ -312,7 +330,7 @@ def main():
         stop = True
 
     print ("creating graph",file=sys.stderr)
-    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,trmap,di,args.threads)
+    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,trmap,di,args.threads,filtermiss)
     
     usebic = False
     useaic = False

@@ -129,7 +129,7 @@ if __name__ == "__main__":
         x = numpy.argsort(constraintdifsbad[i])[::-1][0:3]
         for j in x:
             print ("  ",constraintdifsbad[i][j],constraintgenesbad[i][j])
-        #print "cp "+" ".join(constraint2genesbad[i])
+        #print ("cp "+" ".join(constraint2genesbad[i]))
     print("XXXXXXX")
     for i in constraintdifs:
         print (i,sum(constraintdifsbad[i]),sum(constraint2difsbad[i]),len(constraintgenesbad[i]),len(constraint2genesbad[i]))

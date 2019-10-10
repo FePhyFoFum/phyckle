@@ -96,7 +96,7 @@ def read_rf_read_to_graph(filenamerfwpv,filenamerfp,trmap,di):
     weights.sort()
     return G,weights,sortededges,sets,checked
 
-def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight,G):
+def run_clustering(weights,sortededges,sets,checked,di,usebic,useaic,edges,stop,stopweight,G,nthreads):
     going = True
     tempfiles = []
     for i in weights:
@@ -214,7 +214,7 @@ def main():
         stop = True
 
     print ("creating graph",file=sys.stderr)
-    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,rfpfile,trmap,di,args.threads)
+    G,weights,sortededges,sets,checked = read_rf_read_to_graph(rffile,rfpfile,trmap,di)
     
     usebic = False
     useaic = False
