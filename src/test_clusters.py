@@ -75,6 +75,8 @@ def run_iqtree(fn,di,nthreads):
     os.remove(di+fn+".log")
     os.remove(di+fn+".mldist")
     os.remove(di+fn+".bionj")
+    os.remove(di+fn+".contree")
+    os.remove(di+fn+".splits.nex")
 
 def run_iqtree_part(fn,di,edges,nthreads):
     cmd = "iqtree -nt "+nthreads+" -s "+di+fn+" -m GTR+G -pre "+di+fn+" -"+edges+" "+di+fn+".parts -bb 1000 -redo >> iqtreelog"
@@ -84,6 +86,8 @@ def run_iqtree_part(fn,di,edges,nthreads):
     os.remove(di+fn+".log")
     os.remove(di+fn+".mldist")
     os.remove(di+fn+".bionj")
+    os.remove(di+fn+".contree")
+    os.remove(di+fn+".splits.nex")
 
 def read_rf_read_to_graph(filename,trmap,di,threads,filtermiss):
     rf = open(filename,"r")
